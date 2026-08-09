@@ -398,6 +398,7 @@
               class: meta.class || null,
               gender: meta.gender || null,
               contact_email: meta.contact_email || null,
+              age: meta.age ? Number(meta.age) : null,
             })
             .select('full_name, is_suspended')
             .maybeSingle();

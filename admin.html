@@ -180,6 +180,11 @@
             <thead class="bg-slate-50 text-slate-500 text-xs uppercase">
               <tr>
                 <th class="text-left px-4 py-3">Name</th>
+                <th class="text-left px-4 py-3">Phone</th>
+                <th class="text-left px-4 py-3">Email</th>
+                <th class="text-left px-4 py-3">Age</th>
+                <th class="text-left px-4 py-3">Gender</th>
+                <th class="text-left px-4 py-3">Class</th>
                 <th class="text-left px-4 py-3">Joined</th>
                 <th class="text-left px-4 py-3">Status</th>
                 <th class="text-left px-4 py-3">Actions</th>
@@ -440,12 +445,17 @@
     // ---------- USERS TABLE ----------
     async function loadUsersTable(filter = '') {
       let query = supabaseClient.from('profiles').select('*').order('created_at', { ascending: false });
-      if (filter) query = query.ilike('full_name', `%${filter}%`);
+      if (filter) query = query.or(`full_name.ilike.%${filter}%,phone.ilike.%${filter}%`);
       const { data: users } = await query;
 
       document.getElementById('usersTableBody').innerHTML = (users || []).map(u => `
         <tr class="border-t border-slate-100">
           <td class="px-4 py-3">${escapeHtml(u.full_name)}</td>
+          <td class="px-4 py-3">${escapeHtml(u.phone) || '—'}</td>
+          <td class="px-4 py-3">${escapeHtml(u.contact_email) || '—'}</td>
+          <td class="px-4 py-3">${u.age ?? '—'}</td>
+          <td class="px-4 py-3">${escapeHtml(u.gender) || '—'}</td>
+          <td class="px-4 py-3">${escapeHtml(u.class) || '—'}</td>
           <td class="px-4 py-3">${new Date(u.created_at).toLocaleDateString('en-GB')}</td>
           <td class="px-4 py-3">
             <span class="text-xs px-2 py-1 rounded-full ${u.is_suspended ? 'bg-red-50 text-red-500' : 'bg-teal-50 text-secondary'}">
@@ -457,7 +467,7 @@
             <button class="text-red-500 hover:underline text-xs" onclick="deleteUser('${u.id}')">Delete</button>
           </td>
         </tr>
-      `).join('') || '<tr><td colspan="4" class="px-4 py-6 text-center text-slate-400">No users found.</td></tr>';
+      `).join('') || '<tr><td colspan="9" class="px-4 py-6 text-center text-slate-400">No users found.</td></tr>';
     }
 
     document.getElementById('userSearchInput').addEventListener('input', (e) => loadUsersTable(e.target.value.trim()));

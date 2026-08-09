@@ -93,6 +93,12 @@
             class="w-full text-sm bg-transparent placeholder:text-slate-400" />
         </div>
 
+        <label class="block text-sm font-medium text-slate-700 mb-1.5">Age</label>
+        <div class="field-wrap border border-slate-200 rounded-xl px-4 py-3 mb-5">
+          <input type="number" id="ageInput" inputmode="numeric" min="5" max="99" placeholder="Your age"
+            class="w-full text-sm bg-transparent placeholder:text-slate-400" />
+        </div>
+
         <label class="block text-sm font-medium text-slate-700 mb-2">Class</label>
         <div id="classGrid" class="grid grid-cols-3 gap-2 mb-5"></div>
 
@@ -253,7 +259,9 @@
       document.getElementById('alertBoxDetails').classList.add('hidden');
 
       const nameValue = document.getElementById('nameInput').value.trim();
+      const ageValue = document.getElementById('ageInput').value.trim();
       if (!nameValue) { showAlert('alertBoxDetails', 'Please enter your full name.', 'error'); return; }
+      if (!ageValue || Number(ageValue) < 5 || Number(ageValue) > 99) { showAlert('alertBoxDetails', 'Please enter a valid age.', 'error'); return; }
       if (!selectedClass) { showAlert('alertBoxDetails', 'Please select your class.', 'error'); return; }
       if (!selectedGender) { showAlert('alertBoxDetails', 'Please select your gender.', 'error'); return; }
 
@@ -263,7 +271,7 @@
       const { email, password } = credentialsFor(pendingDigits);
       const { data, error } = await supabaseClient.auth.signUp({
         email, password,
-        options: { data: { phone: pendingDigits, class: selectedClass, gender: selectedGender, full_name: nameValue, contact_email: pendingEmail } }
+        options: { data: { phone: pendingDigits, class: selectedClass, gender: selectedGender, full_name: nameValue, contact_email: pendingEmail, age: ageValue } }
       });
 
       createAccountBtn.disabled = false;
