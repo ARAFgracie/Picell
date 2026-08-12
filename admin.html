@@ -67,6 +67,8 @@
       <div class="max-w-7xl mx-auto px-6 flex gap-1 overflow-x-auto">
         <button data-tab="overview" class="tab-btn active px-4 py-2.5 text-sm font-medium rounded-t-lg">Overview</button>
         <button data-tab="notes" class="tab-btn px-4 py-2.5 text-sm font-medium rounded-t-lg text-slate-500">Notes</button>
+        <button data-tab="articles" class="tab-btn px-4 py-2.5 text-sm font-medium rounded-t-lg text-slate-500">Articles</button>
+        <button data-tab="requests" class="tab-btn px-4 py-2.5 text-sm font-medium rounded-t-lg text-slate-500">Upload Requests</button>
         <button data-tab="users" class="tab-btn px-4 py-2.5 text-sm font-medium rounded-t-lg text-slate-500">Users</button>
         <button data-tab="categories" class="tab-btn px-4 py-2.5 text-sm font-medium rounded-t-lg text-slate-500">Categories</button>
       </div>
@@ -160,11 +162,80 @@
                 <th class="text-left px-4 py-3">Subject</th>
                 <th class="text-left px-4 py-3">Downloads</th>
                 <th class="text-left px-4 py-3">Likes</th>
+                <th class="text-left px-4 py-3">Featured</th>
                 <th class="text-left px-4 py-3">Status</th>
                 <th class="text-left px-4 py-3">Actions</th>
               </tr>
             </thead>
             <tbody id="notesTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ---------- ARTICLES ---------- -->
+      <section data-panel="articles" class="hidden">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="font-display font-700 text-xl">Articles</h2>
+          <button id="addArticleBtn" class="bg-primary hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-full transition-colors">+ New Article</button>
+        </div>
+
+        <!-- FB-post style composer: copy first, then creative below -->
+        <div id="articleForm" class="hidden bg-white border border-slate-200 rounded-2xl p-6 mb-6">
+          <h3 class="font-display font-600 mb-4" id="articleFormTitle">New Article</h3>
+          <input type="hidden" id="articleId" />
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">Copy (headline — shown first)</label>
+              <input id="articleCopy" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" placeholder="A short, punchy headline…" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">Creative (body — shown below the copy)</label>
+              <textarea id="articleCreative" rows="5" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" placeholder="The main article text…"></textarea>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">Subject (optional)</label>
+              <input id="articleSubject" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" placeholder="e.g. Physics" />
+            </div>
+          </div>
+          <div class="flex items-center gap-3 mt-5">
+            <button id="saveArticleBtn" class="bg-primary hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-full transition-colors">Publish</button>
+            <button id="cancelArticleBtn" class="text-sm text-slate-500 hover:text-ink">Cancel</button>
+            <span id="articleFormStatus" class="text-xs text-slate-400"></span>
+          </div>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-2xl overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-slate-50 text-slate-500 text-xs uppercase">
+              <tr>
+                <th class="text-left px-4 py-3">Copy</th>
+                <th class="text-left px-4 py-3">Likes</th>
+                <th class="text-left px-4 py-3">Status</th>
+                <th class="text-left px-4 py-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="articlesTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ---------- UPLOAD REQUESTS ---------- -->
+      <section data-panel="requests" class="hidden">
+        <h2 class="font-display font-700 text-xl mb-6">Upload Requests</h2>
+        <div class="bg-white border border-slate-200 rounded-2xl overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-slate-50 text-slate-500 text-xs uppercase">
+              <tr>
+                <th class="text-left px-4 py-3">Name</th>
+                <th class="text-left px-4 py-3">Age</th>
+                <th class="text-left px-4 py-3">Standard</th>
+                <th class="text-left px-4 py-3">Type</th>
+                <th class="text-left px-4 py-3">Description</th>
+                <th class="text-left px-4 py-3">Status</th>
+                <th class="text-left px-4 py-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="requestsTableBody"></tbody>
           </table>
         </div>
       </section>
@@ -278,6 +349,8 @@
       loadOverview();
       loadNotesTable();
       loadUsersTable();
+      loadArticlesTable();
+      loadRequestsTable();
       populateSubjectSelect();
       renderCategoriesList();
     }
@@ -329,6 +402,11 @@
           <td class="px-4 py-3">${n.downloads}</td>
           <td class="px-4 py-3">${n.likes_count}</td>
           <td class="px-4 py-3">
+            <button onclick="toggleFeatured('${n.id}', ${n.is_featured})" class="text-xs px-2 py-1 rounded-full transition-colors ${n.is_featured ? 'bg-amber-50 text-accent font-semibold' : 'bg-slate-100 text-slate-400'}">
+              ${n.is_featured ? '★ Featured' : '☆ Feature it'}
+            </button>
+          </td>
+          <td class="px-4 py-3">
             <span class="text-xs px-2 py-1 rounded-full ${n.is_hidden ? 'bg-slate-100 text-slate-500' : 'bg-teal-50 text-secondary'}">
               ${n.is_hidden ? 'Hidden' : 'Published'}
             </span>
@@ -339,7 +417,7 @@
             <button class="text-red-500 hover:underline text-xs" onclick="deleteNote('${n.id}')">Delete</button>
           </td>
         </tr>
-      `).join('') || '<tr><td colspan="6" class="px-4 py-6 text-center text-slate-400">No notes yet.</td></tr>';
+      `).join('') || '<tr><td colspan="7" class="px-4 py-6 text-center text-slate-400">No notes yet.</td></tr>';
     }
 
     let notesCache = [];
@@ -361,11 +439,133 @@
       loadNotesTable();
     }
 
+    async function toggleFeatured(id, currentlyFeatured) {
+      await supabaseClient.from('notes').update({ is_featured: !currentlyFeatured }).eq('id', id);
+      loadNotesTable();
+    }
+
     async function deleteNote(id) {
       if (!confirm('Delete this note permanently? This cannot be undone.')) return;
       await supabaseClient.from('notes').delete().eq('id', id);
       loadNotesTable();
       loadOverview();
+    }
+
+    // ---------- ARTICLES ----------
+    async function loadArticlesTable() {
+      const { data: articles } = await supabaseClient.from('articles').select('*').order('created_at', { ascending: false });
+      document.getElementById('articlesTableBody').innerHTML = (articles || []).map(a => `
+        <tr class="border-t border-slate-100">
+          <td class="px-4 py-3 max-w-xs truncate">${escapeHtml(a.copy)}</td>
+          <td class="px-4 py-3">${a.likes_count}</td>
+          <td class="px-4 py-3">
+            <span class="text-xs px-2 py-1 rounded-full ${a.is_hidden ? 'bg-slate-100 text-slate-500' : 'bg-teal-50 text-secondary'}">
+              ${a.is_hidden ? 'Hidden' : 'Published'}
+            </span>
+          </td>
+          <td class="px-4 py-3 space-x-2 whitespace-nowrap">
+            <button class="text-primary hover:underline text-xs" onclick="editArticle('${a.id}')">Edit</button>
+            <button class="text-slate-500 hover:underline text-xs" onclick="toggleHideArticle('${a.id}', ${a.is_hidden})">${a.is_hidden ? 'Publish' : 'Hide'}</button>
+            <button class="text-red-500 hover:underline text-xs" onclick="deleteArticle('${a.id}')">Delete</button>
+          </td>
+        </tr>
+      `).join('') || '<tr><td colspan="4" class="px-4 py-6 text-center text-slate-400">No articles yet.</td></tr>';
+    }
+
+    document.getElementById('addArticleBtn').addEventListener('click', () => {
+      document.getElementById('articleFormTitle').textContent = 'New Article';
+      document.getElementById('articleId').value = '';
+      document.getElementById('articleCopy').value = '';
+      document.getElementById('articleCreative').value = '';
+      document.getElementById('articleSubject').value = '';
+      document.getElementById('articleForm').classList.remove('hidden');
+    });
+    document.getElementById('cancelArticleBtn').addEventListener('click', () => {
+      document.getElementById('articleForm').classList.add('hidden');
+    });
+
+    async function editArticle(id) {
+      const { data: a } = await supabaseClient.from('articles').select('*').eq('id', id).single();
+      if (!a) return;
+      document.getElementById('articleFormTitle').textContent = 'Edit Article';
+      document.getElementById('articleId').value = a.id;
+      document.getElementById('articleCopy').value = a.copy;
+      document.getElementById('articleCreative').value = a.creative;
+      document.getElementById('articleSubject').value = a.subject || '';
+      document.getElementById('articleForm').classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    document.getElementById('saveArticleBtn').addEventListener('click', async () => {
+      const statusEl = document.getElementById('articleFormStatus');
+      const id = document.getElementById('articleId').value;
+      const copy = document.getElementById('articleCopy').value.trim();
+      const creative = document.getElementById('articleCreative').value.trim();
+      const subject = document.getElementById('articleSubject').value.trim();
+
+      if (!copy || !creative) { statusEl.textContent = 'Copy and creative are both required.'; return; }
+      statusEl.textContent = 'Saving…';
+
+      const payload = { copy, creative, subject: subject || null };
+      let error;
+      if (id) {
+        ({ error } = await supabaseClient.from('articles').update(payload).eq('id', id));
+      } else {
+        ({ error } = await supabaseClient.from('articles').insert(payload));
+      }
+
+      if (error) { statusEl.textContent = 'Error: ' + error.message; return; }
+
+      statusEl.textContent = 'Published!';
+      setTimeout(() => {
+        document.getElementById('articleForm').classList.add('hidden');
+        statusEl.textContent = '';
+        loadArticlesTable();
+      }, 600);
+    });
+
+    async function toggleHideArticle(id, currentlyHidden) {
+      await supabaseClient.from('articles').update({ is_hidden: !currentlyHidden }).eq('id', id);
+      loadArticlesTable();
+    }
+    async function deleteArticle(id) {
+      if (!confirm('Delete this article permanently? Comments and likes on it will also be removed.')) return;
+      await supabaseClient.from('articles').delete().eq('id', id);
+      loadArticlesTable();
+    }
+
+    // ---------- UPLOAD REQUESTS ----------
+    async function loadRequestsTable() {
+      const { data: requests } = await supabaseClient.from('upload_requests').select('*').order('created_at', { ascending: false });
+      document.getElementById('requestsTableBody').innerHTML = (requests || []).map(r => `
+        <tr class="border-t border-slate-100">
+          <td class="px-4 py-3">${escapeHtml(r.requester_name)}</td>
+          <td class="px-4 py-3">${r.requester_age ?? '—'}</td>
+          <td class="px-4 py-3">${escapeHtml(r.academic_standard) || '—'}</td>
+          <td class="px-4 py-3">${escapeHtml(r.content_type)}</td>
+          <td class="px-4 py-3 max-w-xs truncate">${escapeHtml(r.description) || '—'}</td>
+          <td class="px-4 py-3">
+            <select onchange="updateRequestStatus('${r.id}', this.value)" class="text-xs border border-slate-200 rounded-full px-2 py-1">
+              <option value="pending" ${r.status === 'pending' ? 'selected' : ''}>Pending</option>
+              <option value="in_progress" ${r.status === 'in_progress' ? 'selected' : ''}>In progress</option>
+              <option value="done" ${r.status === 'done' ? 'selected' : ''}>Done</option>
+              <option value="rejected" ${r.status === 'rejected' ? 'selected' : ''}>Rejected</option>
+            </select>
+          </td>
+          <td class="px-4 py-3">
+            <button class="text-red-500 hover:underline text-xs" onclick="deleteRequest('${r.id}')">Delete</button>
+          </td>
+        </tr>
+      `).join('') || '<tr><td colspan="7" class="px-4 py-6 text-center text-slate-400">No upload requests yet.</td></tr>';
+    }
+
+    async function updateRequestStatus(id, status) {
+      await supabaseClient.from('upload_requests').update({ status }).eq('id', id);
+    }
+    async function deleteRequest(id) {
+      if (!confirm('Delete this request?')) return;
+      await supabaseClient.from('upload_requests').delete().eq('id', id);
+      loadRequestsTable();
     }
 
     document.getElementById('addNoteBtn').addEventListener('click', () => {

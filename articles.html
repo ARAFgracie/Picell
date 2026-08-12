@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Articles — Picell</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: { primary: '#2563EB', secondary: '#14B8A6', bg: '#F8FAFC', ink: '#0F172A', accent: '#F59E0B' },
+        fontFamily: { display: ['Poppins', 'sans-serif'], body: ['Inter', 'sans-serif'] },
+      },
+    },
+  }
+</script>
+<style>
+  body { background-color: #F8FAFC; }
+  .fade-in { opacity: 0; transform: translateY(12px); animation: fadeIn 0.5s ease forwards; }
+  @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+  .like-btn.liked svg { fill: #F59E0B; stroke: #F59E0B; }
+  .like-btn.liked span { color: #F59E0B; }
+  .skeleton { background: linear-gradient(90deg,#E2E8F0 25%,#EDF2F7 37%,#E2E8F0 63%); background-size:400% 100%; animation: shimmer 1.4s ease infinite; }
+  @keyframes shimmer { 0%{background-position:100% 50%;} 100%{background-position:0 50%;} }
+  :focus-visible { outline: 2px solid #14B8A6; outline-offset: 2px; }
+
+  @media (min-width: 768px) {
+    #sidebarAside { transition: transform 0.28s ease; transform: translateX(100%); z-index: 60; }
+    #sidebarAside.sidebar-open { transform: translateX(0); }
+    #sidebarBackdrop { transition: opacity 0.28s ease; opacity: 0; pointer-events: none; z-index: 55; }
+    #sidebarBackdrop.visible { opacity: 1; pointer-events: auto; }
+  }
+</style>
+</head>
+<body class="font-body text-ink antialiased">
+
+  <!-- ============ DESKTOP SIDEBAR (overlay drawer, right side) ============ -->
+  <aside id="sidebarAside" class="hidden md:flex md:flex-col md:w-[16.5rem] md:fixed md:inset-y-0 md:right-0 bg-white border-l border-slate-200 shadow-xl">
+    <div class="flex items-center justify-between px-6 py-6">
+      <a href="dashboard.html" class="flex items-center gap-2 font-display font-700 text-lg">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2V8" stroke="#2563EB" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="12" cy="9.5" r="2" stroke="#2563EB" stroke-width="2"/>
+          <path d="M5 13C5 13 6.5 19 12 19C17.5 19 19 13 19 13" stroke="#F59E0B" stroke-width="2" stroke-linecap="round"/>
+          <path d="M2 13H22" stroke="#14B8A6" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span>Pi<span class="text-secondary">cell</span></span>
+      </a>
+      <button id="sidebarCollapseBtn" title="Close menu" aria-label="Close menu"
+        class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-ink transition-colors shrink-0">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
+      </button>
+    </div>
+    <nav class="flex-1 px-3 space-y-1">
+      <a href="dashboard.html" data-sidebar-nav class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-primary transition-colors">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/></svg>
+        Dashboard
+      </a>
+      <a href="subject.html" data-sidebar-nav class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-primary transition-colors">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg>
+        Subjects
+      </a>
+      <a href="articles.html" data-sidebar-nav class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium bg-blue-50 text-primary">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+        Articles
+      </a>
+      <a href="upload-request.html" data-sidebar-nav class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-primary transition-colors">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12"/><path d="m7 8 5-5 5 5"/><path d="M5 21h14"/></svg>
+        Upload Request
+      </a>
+    </nav>
+    <div class="px-3 pb-4 space-y-1 border-t border-slate-100 pt-3">
+      <div class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600">
+        <span class="w-7 h-7 rounded-full bg-primary text-white font-display font-600 text-xs flex items-center justify-center" id="sidebarAvatar">?</span>
+        <span class="truncate" id="sidebarName">Profile</span>
+      </div>
+      <button id="logoutBtn" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 transition-colors">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+        Logout
+      </button>
+    </div>
+  </aside>
+  <div id="sidebarBackdrop" class="hidden md:block fixed inset-0 bg-ink/30"></div>
+
+  <!-- ============ MOBILE TOP BAR ============ -->
+  <header class="sticky top-0 z-40 bg-bg/90 backdrop-blur border-b border-slate-200 md:hidden">
+    <div class="px-4 py-3 flex items-center gap-3">
+      <a href="dashboard.html" class="flex items-center shrink-0">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2V8" stroke="#2563EB" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="12" cy="9.5" r="2" stroke="#2563EB" stroke-width="2"/>
+          <path d="M5 13C5 13 6.5 19 12 19C17.5 19 19 13 19 13" stroke="#F59E0B" stroke-width="2" stroke-linecap="round"/>
+          <path d="M2 13H22" stroke="#14B8A6" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </a>
+      <h1 class="font-display font-700 text-lg flex-1">Articles</h1>
+      <button id="mobileAvatarBtn" class="w-9 h-9 rounded-full bg-primary text-white font-display font-600 text-sm flex items-center justify-center shrink-0">?</button>
+    </div>
+  </header>
+
+  <!-- ============ MOBILE BOTTOM NAVBAR ============ -->
+  <nav class="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-slate-200 flex items-stretch">
+    <a href="dashboard.html" class="flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-slate-400">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/></svg>
+      <span class="text-[10px] font-medium">Home</span>
+    </a>
+    <a href="subject.html" class="flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-slate-400">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg>
+      <span class="text-[10px] font-medium">Subjects</span>
+    </a>
+    <a href="articles.html" class="flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-primary">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+      <span class="text-[10px] font-medium">Articles</span>
+    </a>
+    <a href="upload-request.html" class="flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-slate-400">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12"/><path d="m7 8 5-5 5 5"/><path d="M5 21h14"/></svg>
+      <span class="text-[10px] font-medium">Upload</span>
+    </a>
+    <button id="profileMenuMobileBtn" class="flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-slate-400">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
+      <span class="text-[10px] font-medium">Profile</span>
+    </button>
+  </nav>
+
+  <div id="mobileProfileSheet" class="hidden md:hidden fixed inset-0 z-50 bg-ink/40" onclick="if(event.target===this) this.classList.add('hidden')">
+    <div class="absolute bottom-16 inset-x-0 bg-white rounded-t-2xl p-4 space-y-1">
+      <div class="flex items-center gap-3 px-3 py-3 border-b border-slate-100 mb-1">
+        <span class="w-9 h-9 rounded-full bg-primary text-white font-display font-600 text-sm flex items-center justify-center" id="sheetAvatar">?</span>
+        <span class="font-medium text-sm" id="sheetName">Profile</span>
+      </div>
+      <button id="logoutBtnMobile" class="w-full text-left px-3 py-3 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 transition-colors">Logout</button>
+    </div>
+  </div>
+
+  <!-- ============ DESKTOP TOP BAR ============ -->
+  <header id="desktopTopBar" class="hidden md:flex sticky top-0 z-30 bg-bg/90 backdrop-blur border-b border-slate-200">
+    <div class="w-full px-6 py-4 flex items-center justify-between gap-4">
+      <a href="dashboard.html" class="flex items-center gap-2 font-display font-700 text-lg shrink-0">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2V8" stroke="#2563EB" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="12" cy="9.5" r="2" stroke="#2563EB" stroke-width="2"/>
+          <path d="M5 13C5 13 6.5 19 12 19C17.5 19 19 13 19 13" stroke="#F59E0B" stroke-width="2" stroke-linecap="round"/>
+          <path d="M2 13H22" stroke="#14B8A6" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span>Pi<span class="text-secondary">cell</span></span>
+      </a>
+      <div class="flex items-center gap-4">
+        <h1 class="font-display font-700 text-lg">Articles</h1>
+        <button id="sidebarOpenBtn" title="Open menu" aria-label="Open menu"
+          class="w-9 h-9 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-primary hover:border-primary transition-colors shrink-0">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="mainContent" class="max-w-xl mx-auto px-4 py-6 pb-24 md:pb-10">
+    <div id="articlesFeed" class="space-y-5"></div>
+    <div id="emptyState" class="hidden text-center py-16">
+      <p class="text-slate-400 text-sm">No articles yet — check back soon.</p>
+    </div>
+  </main>
+
+  <script>
+    // Picell — Supabase client config (inlined so it never depends on a separate file/folder upload)
+    const SUPABASE_URL = 'https://hdfphesajupqphnbmjod.supabase.co';
+    const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_NVkl8mcfd5Qxow-9t39sPA_OPQAcEQo';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+  </script>
+  <script>
+    let currentUser = null;
+    let myComments = {}; // article_id -> comment_text
+    let myLikes = new Set();
+
+    function showFatalError(context, err) {
+      console.error(context, err);
+      let banner = document.getElementById('fatalErrorBanner');
+      if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'fatalErrorBanner';
+        banner.style.cssText = 'position:relative;z-index:9999;background:#FEF2F2;color:#B91C1C;padding:12px 16px;font-size:13px;font-family:monospace;white-space:pre-wrap;border-bottom:2px solid #FCA5A5;';
+        document.body.prepend(banner);
+      }
+      banner.textContent = `⚠ ${context}: ${err?.message || err}`;
+    }
+    window.addEventListener('unhandledrejection', (e) => showFatalError('Unhandled error', e.reason));
+
+    // ---------- SIDEBAR DRAWER ----------
+    const SIDEBAR_KEY = 'bd_sidebar_collapsed';
+    function applySidebarState() {
+      const open = localStorage.getItem(SIDEBAR_KEY) === 'open';
+      document.getElementById('sidebarAside').classList.toggle('sidebar-open', open);
+      document.getElementById('sidebarBackdrop').classList.toggle('visible', open);
+    }
+    function setSidebarOpen(open) {
+      localStorage.setItem(SIDEBAR_KEY, open ? 'open' : 'closed');
+      applySidebarState();
+    }
+    applySidebarState();
+    document.getElementById('sidebarOpenBtn').addEventListener('click', () => setSidebarOpen(true));
+    document.getElementById('sidebarCollapseBtn').addEventListener('click', () => setSidebarOpen(false));
+    document.getElementById('sidebarBackdrop').addEventListener('click', () => setSidebarOpen(false));
+    document.querySelectorAll('#sidebarAside [data-sidebar-nav]').forEach(link => {
+      link.addEventListener('click', () => setSidebarOpen(false));
+    });
+
+    async function logout() {
+      await supabaseClient.auth.signOut();
+      window.location.href = 'login.html';
+    }
+    document.getElementById('logoutBtn').addEventListener('click', logout);
+    document.getElementById('logoutBtnMobile').addEventListener('click', logout);
+    document.getElementById('mobileAvatarBtn').addEventListener('click', () => document.getElementById('mobileProfileSheet').classList.remove('hidden'));
+    document.getElementById('profileMenuMobileBtn').addEventListener('click', () => document.getElementById('mobileProfileSheet').classList.remove('hidden'));
+
+    // ---------- AUTH GUARD ----------
+    (async () => {
+      try {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session) { window.location.href = 'login.html'; return; }
+
+        const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+        if (userError || !user) {
+          await supabaseClient.auth.signOut();
+          window.location.href = 'login.html';
+          return;
+        }
+        currentUser = user;
+
+        const { data: profile } = await supabaseClient.from('profiles').select('full_name').eq('id', currentUser.id).maybeSingle();
+        const name = profile?.full_name || 'Student';
+        const initial = name.charAt(0).toUpperCase();
+        document.getElementById('sidebarName').textContent = name;
+        document.getElementById('sidebarAvatar').textContent = initial;
+        document.getElementById('mobileAvatarBtn').textContent = initial;
+        document.getElementById('sheetAvatar').textContent = initial;
+        document.getElementById('sheetName').textContent = name;
+
+        await loadArticles();
+      } catch (err) {
+        showFatalError('Articles page failed to load', err);
+      }
+    })();
+
+    function timeAgo(dateStr) {
+      const diff = (Date.now() - new Date(dateStr).getTime()) / 1000;
+      if (diff < 3600) return `${Math.max(1, Math.floor(diff / 60))}m`;
+      if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
+      return `${Math.floor(diff / 86400)}d`;
+    }
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str || '';
+      return div.innerHTML;
+    }
+    function countWords(str) {
+      return str.trim().split(/\s+/).filter(Boolean).length;
+    }
+
+    async function loadArticles() {
+      const feed = document.getElementById('articlesFeed');
+      feed.innerHTML = Array(2).fill('<div class="skeleton rounded-2xl h-64"></div>').join('');
+
+      const { data: articles, error } = await supabaseClient
+        .from('articles').select('*')
+        .eq('is_published', true).eq('is_hidden', false)
+        .order('created_at', { ascending: false });
+
+      if (error) { showFatalError('Could not load articles', error); feed.innerHTML = ''; return; }
+
+      feed.innerHTML = '';
+      if (!articles || articles.length === 0) {
+        document.getElementById('emptyState').classList.remove('hidden');
+        return;
+      }
+
+      const articleIds = articles.map(a => a.id);
+      const [{ data: comments }, { data: likes }] = await Promise.all([
+        supabaseClient.from('article_comments').select('article_id, comment_text').eq('user_id', currentUser.id).in('article_id', articleIds),
+        supabaseClient.from('article_likes').select('article_id').eq('user_id', currentUser.id).in('article_id', articleIds),
+      ]);
+      (comments || []).forEach(c => { myComments[c.article_id] = c.comment_text; });
+      myLikes = new Set((likes || []).map(l => l.article_id));
+
+      articles.forEach(article => feed.appendChild(renderArticleCard(article)));
+    }
+
+    function renderArticleCard(article) {
+      const el = document.createElement('article');
+      el.className = 'fade-in bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm';
+      const isLiked = myLikes.has(article.id);
+      const existingComment = myComments[article.id];
+
+      el.innerHTML = `
+        <div class="p-4 flex items-center gap-3 border-b border-slate-50">
+          <span class="w-10 h-10 rounded-full bg-primary flex items-center justify-center shrink-0">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2V8" stroke="white" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="12" cy="9.5" r="2" stroke="white" stroke-width="2"/>
+              <path d="M5 13C5 13 6.5 19 12 19C17.5 19 19 13 19 13" stroke="white" stroke-width="2" stroke-linecap="round"/>
+              <path d="M2 13H22" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <div>
+            <p class="font-display font-600 text-sm text-ink">Picell</p>
+            <p class="text-xs text-slate-400">${timeAgo(article.created_at)} ${article.subject ? '· ' + escapeHtml(article.subject) : ''}</p>
+          </div>
+        </div>
+
+        <div class="px-4 pt-3 pb-2">
+          <p class="font-display font-700 text-ink text-base leading-snug">${escapeHtml(article.copy)}</p>
+        </div>
+        <div class="px-4 pb-4">
+          <p class="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">${escapeHtml(article.creative)}</p>
+        </div>
+
+        <div class="px-4 pb-3 flex items-center gap-2 text-xs text-slate-400">
+          <span class="like-count">${article.likes_count}</span>
+          <span>likes</span>
+        </div>
+
+        <div class="border-t border-slate-100 px-4 py-2 flex items-center">
+          <button class="like-btn ${isLiked ? 'liked' : ''} flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="${isLiked ? '#F59E0B' : 'none'}" stroke="${isLiked ? '#F59E0B' : '#64748B'}" stroke-width="2">
+              <path d="M20.8 4.6a5 5 0 0 0-7.1 0L12 6.3l-1.7-1.7a5 5 0 0 0-7.1 7.1L12 20.3l8.8-8.6a5 5 0 0 0 0-7.1Z"/>
+            </svg>
+            <span class="text-sm font-medium text-slate-600">Like</span>
+          </button>
+        </div>
+
+        <div class="comment-zone border-t border-slate-100 px-4 py-3 ${existingComment ? 'hidden' : ''}">
+          <div class="flex items-center gap-2">
+            <input type="text" class="comment-input flex-1 text-sm bg-slate-50 border border-slate-200 rounded-full px-4 py-2 outline-none focus:border-primary" placeholder="10 words only, Use creatively" />
+            <button class="comment-submit shrink-0 bg-primary hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2 rounded-full transition-colors">Post</button>
+          </div>
+          <p class="comment-error hidden text-xs text-red-500 mt-1.5"></p>
+        </div>
+        <div class="comment-posted px-4 pb-3 ${existingComment ? '' : 'hidden'}">
+          <p class="text-xs text-slate-400 mb-1">Your comment</p>
+          <p class="text-sm bg-slate-50 rounded-xl px-3 py-2 text-ink comment-posted-text">${escapeHtml(existingComment || '')}</p>
+        </div>
+      `;
+
+      el.querySelector('.like-btn').addEventListener('click', () => handleArticleLike(article.id, el));
+
+      const input = el.querySelector('.comment-input');
+      const submitBtn = el.querySelector('.comment-submit');
+      const errorEl = el.querySelector('.comment-error');
+
+      submitBtn.addEventListener('click', async () => {
+        const text = input.value.trim();
+        errorEl.classList.add('hidden');
+
+        if (!text) { errorEl.textContent = 'Write something first.'; errorEl.classList.remove('hidden'); return; }
+        if (countWords(text) > 10) { errorEl.textContent = 'Keep it to 10 words or fewer.'; errorEl.classList.remove('hidden'); return; }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Posting…';
+
+        const { error } = await supabaseClient.from('article_comments').insert({
+          user_id: currentUser.id, article_id: article.id, comment_text: text,
+        });
+
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Post';
+
+        if (error) {
+          errorEl.textContent = error.message.includes('duplicate') ? 'You already commented on this.' : 'Could not post comment.';
+          errorEl.classList.remove('hidden');
+          return;
+        }
+
+        myComments[article.id] = text;
+        el.querySelector('.comment-zone').classList.add('hidden');
+        const postedZone = el.querySelector('.comment-posted');
+        postedZone.querySelector('.comment-posted-text').textContent = text;
+        postedZone.classList.remove('hidden');
+      });
+
+      input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitBtn.click(); });
+
+      return el;
+    }
+
+    async function handleArticleLike(articleId, cardEl) {
+      const btn = cardEl.querySelector('.like-btn');
+      const countEl = cardEl.querySelector('.like-count');
+      const isLiked = myLikes.has(articleId);
+      btn.disabled = true;
+
+      if (isLiked) {
+        const { error } = await supabaseClient.from('article_likes').delete().eq('user_id', currentUser.id).eq('article_id', articleId);
+        if (!error) {
+          myLikes.delete(articleId);
+          btn.classList.remove('liked');
+          btn.querySelector('svg').setAttribute('fill', 'none');
+          btn.querySelector('svg').setAttribute('stroke', '#64748B');
+          countEl.textContent = Math.max(0, parseInt(countEl.textContent) - 1);
+        }
+      } else {
+        const { error } = await supabaseClient.from('article_likes').insert({ user_id: currentUser.id, article_id: articleId });
+        if (!error) {
+          myLikes.add(articleId);
+          btn.classList.add('liked');
+          btn.querySelector('svg').setAttribute('fill', '#F59E0B');
+          btn.querySelector('svg').setAttribute('stroke', '#F59E0B');
+          countEl.textContent = parseInt(countEl.textContent) + 1;
+        }
+      }
+      btn.disabled = false;
+    }
+  </script>
+</body>
+</html>
