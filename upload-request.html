@@ -30,6 +30,8 @@
   .anchor-cta:hover .anchor-icon { transform: translateY(3px) rotate(-8deg); }
   .anchor-cta:disabled { opacity: 0.6; cursor: not-allowed; }
   :focus-visible { outline: 2px solid #14B8A6; outline-offset: 2px; }
+  .req-tab-btn { background: white; border: 1px solid #E2E8F0; color: #64748B; }
+  .req-tab-btn.active { background: #2563EB; color: white; border-color: #2563EB; }
 
   @media (min-width: 768px) {
     #sidebarAside { transition: transform 0.28s ease; transform: translateX(100%); z-index: 60; }
@@ -37,6 +39,37 @@
     #sidebarBackdrop { transition: opacity 0.28s ease; opacity: 0; pointer-events: none; z-index: 55; }
     #sidebarBackdrop.visible { opacity: 1; pointer-events: auto; }
   }
+
+  /* iOS-style glassy buttons */
+  .glass-primary {
+    background: rgba(37,99,235,0.78);
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    border: 1px solid rgba(255,255,255,0.35);
+    box-shadow: 0 4px 16px rgba(37,99,235,0.28), inset 0 1px 0 rgba(255,255,255,0.3);
+    transition: all 0.2s ease;
+  }
+  .glass-primary:hover { background: rgba(37,99,235,0.92); box-shadow: 0 6px 22px rgba(37,99,235,0.38), inset 0 1px 0 rgba(255,255,255,0.35); }
+  .glass-light {
+    background: rgba(255,255,255,0.55);
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    border: 1px solid rgba(255,255,255,0.7);
+    box-shadow: 0 4px 14px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.6);
+    transition: all 0.2s ease;
+  }
+  .glass-light:hover { background: rgba(255,255,255,0.8); box-shadow: 0 6px 18px rgba(15,23,42,0.1); }
+  .glass-dark {
+    background: rgba(15,23,42,0.55);
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    border: 1px solid rgba(255,255,255,0.18);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.12);
+    color: white;
+    transition: all 0.2s ease;
+  }
+  .glass-dark:hover { background: rgba(15,23,42,0.72); box-shadow: 0 6px 22px rgba(0,0,0,0.32); }
+
 </style>
 </head>
 <body class="font-body text-ink antialiased">
@@ -153,7 +186,7 @@
       <div class="flex items-center gap-4">
         <h1 class="font-display font-700 text-lg">Upload Request</h1>
         <button id="sidebarOpenBtn" title="Open menu" aria-label="Open menu"
-          class="w-9 h-9 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-primary hover:border-primary transition-colors shrink-0">
+          class="w-9 h-9 rounded-full glass-light flex items-center justify-center text-slate-500 hover:text-primary transition-colors shrink-0">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
         </button>
       </div>
@@ -163,56 +196,79 @@
   <main class="max-w-2xl mx-auto px-6 py-8 pb-24 md:pb-10">
     <div class="fade-in mb-6">
       <p class="text-xs font-semibold tracking-wide uppercase text-secondary mb-1">Help us grow the shelf</p>
-      <h2 class="font-display font-700 text-2xl text-ink">Request an upload</h2>
+      <h2 class="font-display font-700 text-2xl text-ink">Upload Request</h2>
       <p class="text-slate-500 mt-1 text-sm">Tell us what content you'd like to see, and our team will review it.</p>
+    </div>
+
+    <!-- Sub-section tabs -->
+    <div class="flex gap-2 mb-6 fade-in">
+      <button data-req-tab="form" class="req-tab-btn active flex-1 text-sm font-semibold py-2.5 rounded-full transition-colors">Request Form</button>
+      <button data-req-tab="mine" class="req-tab-btn flex-1 text-sm font-semibold py-2.5 rounded-full transition-colors">My Requests</button>
     </div>
 
     <div id="alertBox" class="hidden mb-4 text-sm px-4 py-3 rounded-xl"></div>
 
-    <form id="requestForm" class="bg-white border border-slate-200 rounded-2xl p-6 space-y-5 fade-in">
-      <div class="grid md:grid-cols-2 gap-5">
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1.5">Your Name</label>
-          <div class="field-wrap border border-slate-200 rounded-xl px-4 py-3">
-            <input type="text" id="reqName" required placeholder="Full name" class="w-full text-sm bg-transparent placeholder:text-slate-400" />
+    <!-- ---------- TAB: Request Form ---------- -->
+    <div data-req-panel="form">
+      <form id="requestForm" class="bg-white border border-slate-200 rounded-2xl p-6 space-y-5 fade-in">
+        <div class="grid md:grid-cols-2 gap-5">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1.5">Your Name</label>
+            <div class="field-wrap border border-slate-200 rounded-xl px-4 py-3">
+              <input type="text" id="reqName" required placeholder="Full name" class="w-full text-sm bg-transparent placeholder:text-slate-400" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1.5">Age</label>
+            <div class="field-wrap border border-slate-200 rounded-xl px-4 py-3">
+              <input type="number" id="reqAge" required min="5" max="99" placeholder="Your age" class="w-full text-sm bg-transparent placeholder:text-slate-400" />
+            </div>
           </div>
         </div>
+
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1.5">Age</label>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Academic Standard</label>
           <div class="field-wrap border border-slate-200 rounded-xl px-4 py-3">
-            <input type="number" id="reqAge" min="5" max="99" placeholder="Your age" class="w-full text-sm bg-transparent placeholder:text-slate-400" />
+            <input type="text" id="reqStandard" required placeholder="e.g. Class 10, HSC 2nd Year, University" class="w-full text-sm bg-transparent placeholder:text-slate-400" />
           </div>
         </div>
-      </div>
 
-      <div>
-        <label class="block text-sm font-medium text-slate-700 mb-1.5">Academic Standard</label>
-        <div class="field-wrap border border-slate-200 rounded-xl px-4 py-3">
-          <input type="text" id="reqStandard" placeholder="e.g. Class 10, HSC 2nd Year, University" class="w-full text-sm bg-transparent placeholder:text-slate-400" />
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Content Type</label>
+          <div id="contentTypeGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-2"></div>
         </div>
-      </div>
 
-      <div>
-        <label class="block text-sm font-medium text-slate-700 mb-2">Content Type</label>
-        <div id="contentTypeGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-2"></div>
-      </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Description</label>
+          <textarea id="reqDescription" required rows="4" placeholder="Describe what you'd like uploaded — subject, topic, source, anything that helps." class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-blue-100 field-wrap"></textarea>
+        </div>
 
-      <div>
-        <label class="block text-sm font-medium text-slate-700 mb-1.5">Description</label>
-        <textarea id="reqDescription" rows="4" placeholder="Describe what you'd like uploaded — subject, topic, source, anything that helps." class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-blue-100 field-wrap"></textarea>
-      </div>
+        <button type="submit" id="submitBtn" class="anchor-cta w-full flex items-center justify-center gap-2 glass-primary text-white font-semibold text-sm py-3.5 rounded-full transition-colors">
+          <svg class="anchor-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="5" r="2" stroke="white" stroke-width="2"/>
+            <path d="M12 7V19" stroke="white" stroke-width="2"/>
+            <path d="M6 12C6 12 7 18 12 18C17 18 18 12 18 12" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            <path d="M3 12H6" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            <path d="M18 12H21" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span id="submitText">Request a upload</span>
+        </button>
+      </form>
 
-      <button type="submit" id="submitBtn" class="anchor-cta w-full flex items-center justify-center gap-2 bg-primary hover:bg-blue-700 text-white font-semibold text-sm py-3.5 rounded-full transition-colors">
-        <svg class="anchor-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="12" cy="5" r="2" stroke="white" stroke-width="2"/>
-          <path d="M12 7V19" stroke="white" stroke-width="2"/>
-          <path d="M6 12C6 12 7 18 12 18C17 18 18 12 18 12" stroke="white" stroke-width="2" stroke-linecap="round"/>
-          <path d="M3 12H6" stroke="white" stroke-width="2" stroke-linecap="round"/>
-          <path d="M18 12H21" stroke="white" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-        <span id="submitText">Request a upload</span>
-      </button>
-    </form>
+      <!-- Post-submit confirmation -->
+      <div id="successNote" class="hidden bg-teal-50 border border-teal-100 rounded-2xl p-5 text-center fade-in">
+        <p class="font-display font-600 text-secondary mb-1">Request sent successfully!</p>
+        <p class="text-sm text-slate-600">Picell management will mail you soon. Then you can share the content via mail.</p>
+      </div>
+    </div>
+
+    <!-- ---------- TAB: My Requests ---------- -->
+    <div data-req-panel="mine" class="hidden space-y-3">
+      <div id="myRequestsList" class="space-y-3"></div>
+      <div id="myRequestsEmpty" class="hidden text-center py-16">
+        <p class="text-slate-400 text-sm">You haven't submitted any requests yet.</p>
+      </div>
+    </div>
   </main>
 
   <script>
@@ -347,11 +403,69 @@
         return;
       }
 
-      showAlert('Request sent! Our team will review it soon.', 'success');
+      document.getElementById('requestForm').classList.add('hidden');
+      document.getElementById('successNote').classList.remove('hidden');
       document.getElementById('requestForm').reset();
       document.querySelectorAll('.option-chip').forEach(c => c.classList.remove('selected'));
       selectedType = null;
     });
+
+    // ---------- TABS ----------
+    document.querySelectorAll('.req-tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.req-tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('[data-req-panel]').forEach(p => p.classList.add('hidden'));
+        document.querySelector(`[data-req-panel="${btn.dataset.reqTab}"]`).classList.remove('hidden');
+        if (btn.dataset.reqTab === 'mine') loadMyRequests();
+      });
+    });
+
+    const STATUS_LABELS = { pending: 'Pending', in_progress: 'In progress', done: 'Fulfilled', rejected: 'Rejected' };
+    const STATUS_COLORS = { pending: 'bg-amber-50 text-accent', in_progress: 'bg-blue-50 text-primary', done: 'bg-teal-50 text-secondary', rejected: 'bg-red-50 text-red-500' };
+
+    async function loadMyRequests() {
+      const list = document.getElementById('myRequestsList');
+      list.innerHTML = '<div class="skeleton rounded-2xl h-20"></div>';
+
+      const { data: requests, error } = await supabaseClient
+        .from('upload_requests').select('*, notes:linked_note_id(downloads)')
+        .eq('user_id', currentUser.id)
+        .order('created_at', { ascending: false });
+
+      if (error) { showFatalError('Could not load your requests', error); list.innerHTML = ''; return; }
+
+      list.innerHTML = '';
+      if (!requests || requests.length === 0) {
+        document.getElementById('myRequestsEmpty').classList.remove('hidden');
+        return;
+      }
+      document.getElementById('myRequestsEmpty').classList.add('hidden');
+
+      requests.forEach(r => {
+        const el = document.createElement('div');
+        el.className = 'bg-white border border-slate-200 rounded-2xl p-4 fade-in';
+        const views = r.notes?.downloads;
+        el.innerHTML = `
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="font-display font-600 text-sm text-ink">${escapeHtml(r.content_type)}</p>
+              <p class="text-xs text-slate-500 mt-0.5">${escapeHtml(r.description || 'No description')}</p>
+              <p class="text-xs text-slate-400 mt-1">${new Date(r.created_at).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' })}</p>
+            </div>
+            <span class="text-xs px-2.5 py-1 rounded-full shrink-0 ${STATUS_COLORS[r.status] || 'bg-slate-100 text-slate-500'}">${STATUS_LABELS[r.status] || r.status}</span>
+          </div>
+          ${r.status === 'done' && views != null ? `<p class="text-xs text-secondary font-medium mt-3 pt-3 border-t border-slate-100">👁 ${views} views on your uploaded content</p>` : ''}
+        `;
+        list.appendChild(el);
+      });
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str || '';
+      return div.innerHTML;
+    }
   </script>
 </body>
 </html>

@@ -9,6 +9,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.1/dist/jspdf.plugin.autotable.min.js"></script>
 <script>
   tailwind.config = {
     theme: {
@@ -28,6 +31,37 @@
   @keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-8px);} 75%{transform:translateX(8px);} }
   :focus-visible { outline: 2px solid #14B8A6; outline-offset: 2px; }
   ::-webkit-scrollbar { height: 6px; width: 6px; }
+
+  /* iOS-style glassy buttons */
+  .glass-primary {
+    background: rgba(37,99,235,0.78);
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    border: 1px solid rgba(255,255,255,0.35);
+    box-shadow: 0 4px 16px rgba(37,99,235,0.28), inset 0 1px 0 rgba(255,255,255,0.3);
+    transition: all 0.2s ease;
+  }
+  .glass-primary:hover { background: rgba(37,99,235,0.92); box-shadow: 0 6px 22px rgba(37,99,235,0.38), inset 0 1px 0 rgba(255,255,255,0.35); }
+  .glass-light {
+    background: rgba(255,255,255,0.55);
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    border: 1px solid rgba(255,255,255,0.7);
+    box-shadow: 0 4px 14px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.6);
+    transition: all 0.2s ease;
+  }
+  .glass-light:hover { background: rgba(255,255,255,0.8); box-shadow: 0 6px 18px rgba(15,23,42,0.1); }
+  .glass-dark {
+    background: rgba(15,23,42,0.55);
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    border: 1px solid rgba(255,255,255,0.18);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.12);
+    color: white;
+    transition: all 0.2s ease;
+  }
+  .glass-dark:hover { background: rgba(15,23,42,0.72); box-shadow: 0 6px 22px rgba(0,0,0,0.32); }
+
 </style>
 </head>
 <body class="font-body text-ink antialiased">
@@ -43,7 +77,7 @@
         <p class="text-slate-400 text-sm mb-6">Enter the admin passcode to continue.</p>
         <input type="password" id="passcodeInput" placeholder="••••••••"
           class="w-full text-center bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-secondary mb-4" />
-        <button id="passcodeSubmit" class="w-full bg-primary hover:bg-blue-700 text-white font-semibold text-sm py-3 rounded-full transition-colors">
+        <button id="passcodeSubmit" class="w-full glass-primary text-white font-semibold text-sm py-3 rounded-full transition-colors">
           Unlock
         </button>
         <p id="passcodeError" class="hidden text-red-400 text-xs mt-3">Access Denied. Incorrect passcode.</p>
@@ -114,7 +148,7 @@
       <section data-panel="notes" class="hidden">
         <div class="flex items-center justify-between mb-6">
           <h2 class="font-display font-700 text-xl">Notes Management</h2>
-          <button id="addNoteBtn" class="bg-primary hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-full transition-colors">+ Add New Note</button>
+          <button id="addNoteBtn" class="glass-primary text-white text-sm font-semibold px-5 py-2.5 rounded-full transition-colors">+ Add New Note</button>
         </div>
 
         <!-- Add/Edit form -->
@@ -148,7 +182,7 @@
             </div>
           </div>
           <div class="flex items-center gap-3 mt-5">
-            <button id="saveNoteBtn" class="bg-primary hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-full transition-colors">Submit</button>
+            <button id="saveNoteBtn" class="glass-primary text-white text-sm font-semibold px-5 py-2.5 rounded-full transition-colors">Submit</button>
             <button id="cancelNoteBtn" class="text-sm text-slate-500 hover:text-ink">Cancel</button>
             <span id="noteFormStatus" class="text-xs text-slate-400"></span>
           </div>
@@ -176,7 +210,7 @@
       <section data-panel="articles" class="hidden">
         <div class="flex items-center justify-between mb-6">
           <h2 class="font-display font-700 text-xl">Articles</h2>
-          <button id="addArticleBtn" class="bg-primary hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-full transition-colors">+ New Article</button>
+          <button id="addArticleBtn" class="glass-primary text-white text-sm font-semibold px-5 py-2.5 rounded-full transition-colors">+ New Article</button>
         </div>
 
         <!-- FB-post style composer: copy first, then creative below -->
@@ -198,7 +232,7 @@
             </div>
           </div>
           <div class="flex items-center gap-3 mt-5">
-            <button id="saveArticleBtn" class="bg-primary hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-full transition-colors">Publish</button>
+            <button id="saveArticleBtn" class="glass-primary text-white text-sm font-semibold px-5 py-2.5 rounded-full transition-colors">Publish</button>
             <button id="cancelArticleBtn" class="text-sm text-slate-500 hover:text-ink">Cancel</button>
             <span id="articleFormStatus" class="text-xs text-slate-400"></span>
           </div>
@@ -232,6 +266,7 @@
                 <th class="text-left px-4 py-3">Type</th>
                 <th class="text-left px-4 py-3">Description</th>
                 <th class="text-left px-4 py-3">Status</th>
+                <th class="text-left px-4 py-3">Linked Note</th>
                 <th class="text-left px-4 py-3">Actions</th>
               </tr>
             </thead>
@@ -246,6 +281,19 @@
           <h2 class="font-display font-700 text-xl">Users</h2>
           <input type="text" id="userSearchInput" placeholder="Search users…" class="border border-slate-200 rounded-full px-4 py-2 text-sm w-64" />
         </div>
+
+        <!-- Export controls -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-5 mb-6">
+          <h3 class="font-display font-600 text-sm mb-3">Export user data</h3>
+          <p class="text-xs text-slate-500 mb-3">Choose which columns to include, then pick a format. Only the columns you select will appear in the file.</p>
+          <div id="exportColumnGrid" class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4"></div>
+          <div class="flex flex-wrap gap-2">
+            <button id="exportCsvBtn" class="text-xs font-semibold px-4 py-2 rounded-full border border-slate-200 hover:border-primary hover:text-primary transition-colors">Export CSV</button>
+            <button id="exportExcelBtn" class="text-xs font-semibold px-4 py-2 rounded-full border border-slate-200 hover:border-primary hover:text-primary transition-colors">Export Excel</button>
+            <button id="exportPdfBtn" class="text-xs font-semibold px-4 py-2 rounded-full border border-slate-200 hover:border-primary hover:text-primary transition-colors">Export PDF</button>
+          </div>
+        </div>
+
         <div class="bg-white border border-slate-200 rounded-2xl overflow-x-auto">
           <table class="w-full text-sm">
             <thead class="bg-slate-50 text-slate-500 text-xs uppercase">
@@ -535,8 +583,14 @@
     }
 
     // ---------- UPLOAD REQUESTS ----------
+    let allNotesCache = [];
     async function loadRequestsTable() {
-      const { data: requests } = await supabaseClient.from('upload_requests').select('*').order('created_at', { ascending: false });
+      const [{ data: requests }, { data: allNotes }] = await Promise.all([
+        supabaseClient.from('upload_requests').select('*').order('created_at', { ascending: false }),
+        supabaseClient.from('notes').select('id, title').order('created_at', { ascending: false }),
+      ]);
+      allNotesCache = allNotes || [];
+
       document.getElementById('requestsTableBody').innerHTML = (requests || []).map(r => `
         <tr class="border-t border-slate-100">
           <td class="px-4 py-3">${escapeHtml(r.requester_name)}</td>
@@ -553,14 +607,23 @@
             </select>
           </td>
           <td class="px-4 py-3">
+            <select onchange="linkRequestNote('${r.id}', this.value)" class="text-xs border border-slate-200 rounded-full px-2 py-1 max-w-[140px]">
+              <option value="">— none —</option>
+              ${allNotesCache.map(n => `<option value="${n.id}" ${r.linked_note_id === n.id ? 'selected' : ''}>${escapeHtml(n.title)}</option>`).join('')}
+            </select>
+          </td>
+          <td class="px-4 py-3">
             <button class="text-red-500 hover:underline text-xs" onclick="deleteRequest('${r.id}')">Delete</button>
           </td>
         </tr>
-      `).join('') || '<tr><td colspan="7" class="px-4 py-6 text-center text-slate-400">No upload requests yet.</td></tr>';
+      `).join('') || '<tr><td colspan="8" class="px-4 py-6 text-center text-slate-400">No upload requests yet.</td></tr>';
     }
 
     async function updateRequestStatus(id, status) {
       await supabaseClient.from('upload_requests').update({ status }).eq('id', id);
+    }
+    async function linkRequestNote(id, noteId) {
+      await supabaseClient.from('upload_requests').update({ linked_note_id: noteId || null }).eq('id', id);
     }
     async function deleteRequest(id) {
       if (!confirm('Delete this request?')) return;
@@ -643,10 +706,12 @@
     });
 
     // ---------- USERS TABLE ----------
+    let usersCache = [];
     async function loadUsersTable(filter = '') {
       let query = supabaseClient.from('profiles').select('*').order('created_at', { ascending: false });
       if (filter) query = query.or(`full_name.ilike.%${filter}%,phone.ilike.%${filter}%`);
       const { data: users } = await query;
+      usersCache = users || [];
 
       document.getElementById('usersTableBody').innerHTML = (users || []).map(u => `
         <tr class="border-t border-slate-100">
@@ -671,6 +736,92 @@
     }
 
     document.getElementById('userSearchInput').addEventListener('input', (e) => loadUsersTable(e.target.value.trim()));
+
+    // ---------- EXPORT ----------
+    const EXPORT_COLUMNS = [
+      { key: 'full_name', label: 'Name' },
+      { key: 'phone', label: 'Phone' },
+      { key: 'contact_email', label: 'Email' },
+      { key: 'age', label: 'Age' },
+      { key: 'gender', label: 'Gender' },
+      { key: 'class', label: 'Class' },
+      { key: 'created_at', label: 'Joined' },
+      { key: 'is_suspended', label: 'Status' },
+    ];
+    const exportGrid = document.getElementById('exportColumnGrid');
+    EXPORT_COLUMNS.forEach(col => {
+      const label = document.createElement('label');
+      label.className = 'flex items-center gap-2 text-xs text-slate-600 cursor-pointer';
+      label.innerHTML = `<input type="checkbox" class="export-col-cb" value="${col.key}" ${col.key === 'full_name' || col.key === 'contact_email' ? 'checked' : ''}> ${col.label}`;
+      exportGrid.appendChild(label);
+    });
+
+    function getSelectedExportColumns() {
+      return Array.from(document.querySelectorAll('.export-col-cb:checked')).map(cb => {
+        return EXPORT_COLUMNS.find(c => c.key === cb.value);
+      });
+    }
+
+    function buildExportRows(columns) {
+      return usersCache.map(u => {
+        const row = {};
+        columns.forEach(col => {
+          let val = u[col.key];
+          if (col.key === 'created_at') val = new Date(val).toLocaleDateString('en-GB');
+          if (col.key === 'is_suspended') val = val ? 'Suspended' : 'Active';
+          row[col.label] = val ?? '';
+        });
+        return row;
+      });
+    }
+
+    document.getElementById('exportCsvBtn').addEventListener('click', () => {
+      const columns = getSelectedExportColumns();
+      if (columns.length === 0) { alert('Select at least one column to export.'); return; }
+      const rows = buildExportRows(columns);
+      const headers = columns.map(c => c.label);
+      const csvLines = [headers.join(',')].concat(
+        rows.map(r => headers.map(h => `"${String(r[h]).replace(/"/g, '""')}"`).join(','))
+      );
+      const blob = new Blob([csvLines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      downloadBlob(blob, 'picell-users.csv');
+    });
+
+    document.getElementById('exportExcelBtn').addEventListener('click', () => {
+      const columns = getSelectedExportColumns();
+      if (columns.length === 0) { alert('Select at least one column to export.'); return; }
+      const rows = buildExportRows(columns);
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Users');
+      XLSX.writeFile(wb, 'picell-users.xlsx');
+    });
+
+    document.getElementById('exportPdfBtn').addEventListener('click', () => {
+      const columns = getSelectedExportColumns();
+      if (columns.length === 0) { alert('Select at least one column to export.'); return; }
+      const rows = buildExportRows(columns);
+      const headers = columns.map(c => c.label);
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.text('Picell — User Export', 14, 15);
+      doc.autoTable({
+        startY: 22,
+        head: [headers],
+        body: rows.map(r => headers.map(h => String(r[h]))),
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [37, 99, 235] },
+      });
+      doc.save('picell-users.pdf');
+    });
+
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
 
     async function toggleSuspend(id, currentlySuspended) {
       await supabaseClient.from('profiles').update({ is_suspended: !currentlySuspended }).eq('id', id);
