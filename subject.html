@@ -84,6 +84,29 @@
   }
   .glass-dark:hover { background: rgba(15,23,42,0.72); box-shadow: 0 6px 22px rgba(0,0,0,0.32); }
 
+
+  /* Animated iridescent shader-style border (like the Dribbble reference) */
+  .glass-primary, .glass-light, .glass-dark {
+    position: relative;
+    z-index: 0;
+  }
+  .glass-primary::before, .glass-light::before, .glass-dark::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    background: conic-gradient(from 0deg, #60a5fa, #a78bfa, #f472b6, #fbbf24, #34d399, #60a5fa);
+    z-index: -1;
+    animation: shaderSpin 3.5s linear infinite;
+    opacity: 0.9;
+  }
+  @keyframes shaderSpin {
+    to { transform: rotate(1turn); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .glass-primary::before, .glass-light::before, .glass-dark::before { animation: none; }
+  }
+
 </style>
 </head>
 <body class="font-body text-ink antialiased">
@@ -312,6 +335,7 @@
       const open = localStorage.getItem(SIDEBAR_KEY) === 'open';
       document.getElementById('sidebarAside').classList.toggle('sidebar-open', open);
       document.getElementById('sidebarBackdrop').classList.toggle('visible', open);
+      document.body.style.overflow = open ? 'hidden' : '';
     }
     function setSidebarOpen(open) {
       localStorage.setItem(SIDEBAR_KEY, open ? 'open' : 'closed');
