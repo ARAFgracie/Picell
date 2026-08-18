@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mock Test — Picell</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+tailwind.config={theme:{extend:{colors:{primary:'#2563EB',secondary:'#14B8A6',bg:'#F8FAFC',ink:'#0F172A',accent:'#F59E0B'},fontFamily:{display:['Poppins','sans-serif'],body:['Inter','sans-serif']}}}};
+</script>
+<style>
+body{background:#F8FAFC}.fade-in{opacity:0;transform:translateY(12px);animation:fadeIn .5s ease forwards}@keyframes fadeIn{to{opacity:1;transform:translateY(0)}}
+.glass-primary{background:linear-gradient(180deg,rgba(59,120,246,.85),rgba(37,99,235,.78));backdrop-filter:blur(18px) saturate(180%);-webkit-backdrop-filter:blur(18px) saturate(180%);border:1px solid rgba(255,255,255,.4);box-shadow:0 4px 16px rgba(37,99,235,.25),inset 0 1px 1px rgba(255,255,255,.5),inset 0 -1px 6px rgba(0,0,0,.08);transition:all .25s ease}.glass-primary:hover{box-shadow:0 6px 20px rgba(37,99,235,.32),inset 0 1px 1px rgba(255,255,255,.55),inset 0 -1px 6px rgba(0,0,0,.08);transform:translateY(-1px)}.glass-primary:active{transform:translateY(0)}
+.glass-light{background:linear-gradient(180deg,rgba(255,255,255,.75),rgba(255,255,255,.45));backdrop-filter:blur(18px) saturate(180%);-webkit-backdrop-filter:blur(18px) saturate(180%);border:1px solid rgba(255,255,255,.8);box-shadow:0 4px 14px rgba(15,23,42,.08),inset 0 1px 1px rgba(255,255,255,.9),inset 0 -1px 4px rgba(15,23,42,.04)}
+.option-card{transition:.2s ease}.option-card:has(input:checked){border-color:#2563EB;background:#EFF6FF;box-shadow:0 0 0 1px rgba(37,99,235,.15)}
+:focus-visible{outline:2px solid #14B8A6;outline-offset:2px}
+</style>
+</head>
+<body class="font-body text-ink antialiased">
+<header class="sticky top-0 z-40 bg-bg/90 backdrop-blur border-b border-slate-200">
+  <div class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
+    <a href="dashboard.html" class="font-display font-700 text-lg">Pi<span class="text-primary">cell</span></a>
+    <a href="javascript:history.back()" class="text-sm text-slate-500 hover:text-primary">Back</a>
+  </div>
+</header>
+<main class="max-w-4xl mx-auto px-6 py-8 md:py-10">
+  <div id="loadingState" class="py-20 text-center text-slate-400">Preparing your mock test…</div>
+  <div id="errorState" class="hidden py-20 text-center"><p id="errorText" class="text-slate-500 mb-4"></p><a href="dashboard.html" class="text-primary font-semibold text-sm">Return to dashboard</a></div>
+  <section id="testView" class="hidden fade-in">
+    <div class="mb-7">
+      <p id="noteReference" class="text-xs text-secondary font-semibold uppercase tracking-wide"></p>
+      <h1 id="noteTitle" class="font-display font-700 text-2xl md:text-3xl mt-1"></h1>
+      <div class="flex flex-wrap gap-2 mt-3 text-xs text-slate-500"><span id="questionCount" class="bg-white border border-slate-200 rounded-full px-3 py-1"></span><span class="bg-blue-50 text-primary rounded-full px-3 py-1">15 max per cycle</span></div>
+    </div>
+    <form id="testForm" class="space-y-5"></form>
+    <div class="mt-8 flex justify-end"><button id="submitBtn" type="button" class="glass-primary text-white font-semibold text-sm px-7 py-3.5 rounded-full">Submit</button></div>
+  </section>
+</main>
+<div id="resultModal" class="hidden fixed inset-0 z-50 bg-ink/50 backdrop-blur-sm p-4 overflow-y-auto">
+  <div class="max-w-3xl mx-auto my-6 glass-light rounded-3xl p-6 md:p-8 fade-in">
+    <div class="flex items-start justify-between gap-4"><div><p class="text-xs text-secondary font-semibold uppercase tracking-wide">Mock Test Complete</p><h2 class="font-display font-700 text-2xl mt-1">Your Scoresheet</h2></div><div id="scoreLine" class="font-display font-800 text-primary text-xl"></div></div>
+    <div class="grid md:grid-cols-3 gap-4 mt-7">
+      <div class="bg-white/60 rounded-2xl p-4"><p class="text-xs text-slate-400 mb-1">Correct</p><p id="correctSummary" class="font-display font-700 text-xl text-secondary"></p></div>
+      <div class="bg-white/60 rounded-2xl p-4"><p class="text-xs text-slate-400 mb-1">Wrong</p><p id="wrongSummary" class="font-display font-700 text-xl text-red-500"></p></div>
+      <div class="bg-white/60 rounded-2xl p-4"><p class="text-xs text-slate-400 mb-1">Skipped</p><p id="skippedSummary" class="font-display font-700 text-xl text-slate-500"></p></div>
+    </div>
+    <div class="space-y-6 mt-7" id="scoreSections"></div>
+    <div class="mt-8 pt-5 border-t border-white/70"><button id="homeBtn" class="glass-primary text-white font-semibold text-sm px-6 py-3 rounded-full">Return to Home</button></div>
+  </div>
+</div>
+<script>
+const SUPABASE_URL='https://hdfphesajupqphnbmjod.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY='sb_publishable_NVkl8mcfd5Qxow-9t39sPA_OPQAcEQo';
+const supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+const SERVE_SIZE=15;
+let currentUser=null,currentNote=null,servedQuestions=[];
+
+function esc(v){const d=document.createElement('div');d.textContent=v??'';return d.innerHTML}
+function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function unique(arr){return [...new Set(arr)]}
+function showError(msg){document.getElementById('loadingState').classList.add('hidden');document.getElementById('testView').classList.add('hidden');document.getElementById('errorText').textContent=msg;document.getElementById('errorState').classList.remove('hidden')}
+function noteId(){return new URLSearchParams(location.search).get('note')}
+
+async function getQuestions(noteIdValue){
+  const {data,error}=await supabaseClient.from('mcq_questions').select('*').eq('note_id',noteIdValue).order('created_at',{ascending:true});
+  if(error) throw error; return data||[];
+}
+
+async function generateServeSet(allQuestions){
+  const ids=allQuestions.map(q=>q.id);
+  if(ids.length<=SERVE_SIZE) return {ids:shuffle(ids),progress:null};
+
+  let {data:progress,error}=await supabaseClient.from('mock_test_progress').select('*').eq('user_id',currentUser.id).eq('note_id',currentNote.id).maybeSingle();
+  if(error) throw error;
+
+  let seen=unique((progress?.seen_question_ids||[]).filter(id=>ids.includes(id)));
+  let last=unique((progress?.last_served_question_ids||[]).filter(id=>ids.includes(id)));
+
+  // If the previous cycle finished the loop, restart before this attempt.
+  if(seen.length>=ids.length){seen=[];last=[];progress=null}
+
+  const unseen=ids.filter(id=>!seen.includes(id));
+  const newCount=Math.min(SERVE_SIZE,unseen.length);
+  const newQuestions=shuffle(unseen).slice(0,newCount);
+  const oldCount=SERVE_SIZE-newCount;
+  const oldQuestions=oldCount>0?shuffle(last).slice(0,oldCount):[];
+  const serveSet=unique([...newQuestions,...oldQuestions]);
+  if(serveSet.length!==Math.min(SERVE_SIZE,ids.length)) throw new Error('Could not generate a complete mock-test cycle. Please try again.');
+
+  seen=unique([...seen,...newQuestions]);
+  const payload={user_id:currentUser.id,note_id:currentNote.id,seen_question_ids:seen,last_served_question_ids:serveSet,updated_at:new Date().toISOString()};
+  if(progress?.id){
+    const {error:updateError}=await supabaseClient.from('mock_test_progress').update(payload).eq('id',progress.id).eq('user_id',currentUser.id);
+    if(updateError) throw updateError;
+  }else{
+    const {error:insertError}=await supabaseClient.from('mock_test_progress').insert(payload);
+    if(insertError) throw insertError;
+  }
+  return {ids:shuffle(serveSet),progress:payload};
+}
+
+function renderQuestions(questions){
+  const form=document.getElementById('testForm');
+  form.innerHTML=questions.map((q,i)=>`
+    <article class="bg-white border border-slate-200 rounded-2xl p-5 md:p-6">
+      <div class="flex items-start gap-3 mb-4"><span class="shrink-0 w-8 h-8 rounded-full bg-blue-50 text-primary flex items-center justify-center text-xs font-bold">${i+1}</span><h2 class="font-display font-600 text-base md:text-lg leading-relaxed">${esc(q.question_text)}</h2></div>
+      <div class="grid gap-2.5">
+        ${['A','B','C','D'].map(letter=>`<label class="option-card flex items-start gap-3 border border-slate-200 rounded-xl p-3.5 cursor-pointer"><input class="mt-1 accent-primary" type="radio" name="q-${q.id}" value="${letter}"><span class="text-sm"><b>${letter}.</b> ${esc(q['option_'+letter.toLowerCase()])}</span></label>`).join('')}
+      </div>
+    </article>`).join('');
+}
+
+async function init(){
+  try{
+    const {data:{session}}=await supabaseClient.auth.getSession(); if(!session){location.href='login.html';return}
+    const {data:{user},error:userError}=await supabaseClient.auth.getUser(); if(userError||!user){location.href='login.html';return} currentUser=user;
+    const id=noteId(); if(!id){showError('No note was selected.');return}
+    const {data:note,error:noteError}=await supabaseClient.from('notes').select('*').eq('id',id).eq('is_published',true).eq('is_hidden',false).single();
+    if(noteError||!note){showError('This note could not be found or is not available.');return} currentNote=note;
+    const all=await getQuestions(id); if(!all.length){showError('This note does not have any MCQ questions yet.');return}
+    const {ids}=await generateServeSet(all);
+    const byId=new Map(all.map(q=>[q.id,q])); servedQuestions=ids.map(x=>byId.get(x)).filter(Boolean);
+    document.getElementById('loadingState').classList.add('hidden');document.getElementById('testView').classList.remove('hidden');
+    document.title=`Mock Test — ${currentNote.title} — Picell`;
+    document.getElementById('noteReference').textContent=currentNote.reference_code?`Reference: ${currentNote.reference_code}`:'';
+    document.getElementById('noteTitle').textContent=currentNote.title;
+    document.getElementById('questionCount').textContent=`${servedQuestions.length} question${servedQuestions.length===1?'':'s'}`;
+    renderQuestions(servedQuestions);
+  }catch(e){console.error(e);showError(e.message||'Could not prepare the mock test. Please try again.')}
+}
+
+function answerFor(q){return document.querySelector(`input[name="q-${q.id}"]:checked`)?.value||null}
+function optionText(q,letter){return letter?`${letter}. ${q['option_'+letter.toLowerCase()]}`:'—'}
+
+async function submitTest(){
+  const btn=document.getElementById('submitBtn');btn.disabled=true;btn.textContent='Checking…';
+  const results=[];let correct=0,wrong=0,skipped=0;const answers={};
+  servedQuestions.forEach(q=>{const chosen=answerFor(q);answers[q.id]=chosen;if(!chosen){skipped++;results.push({q,chosen,type:'skipped'})}else if(chosen===q.correct_option){correct++;results.push({q,chosen,type:'correct'})}else{wrong++;results.push({q,chosen,type:'wrong'})}});
+  const {error}=await supabaseClient.from('mock_test_attempts').insert({user_id:currentUser.id,note_id:currentNote.id,question_ids:servedQuestions.map(q=>q.id),answers,correct_count:correct,wrong_count:wrong,skipped_count:skipped});
+  if(error){btn.disabled=false;btn.textContent='Submit';alert('Your score could not be saved: '+error.message);return}
+  document.getElementById('correctSummary').textContent=correct;document.getElementById('wrongSummary').textContent=wrong;document.getElementById('skippedSummary').textContent=skipped;document.getElementById('scoreLine').textContent=`${correct}/${servedQuestions.length}`;
+  const sections=[
+    {title:'✅ Correct answers',type:'correct',empty:'No correct answers.'},
+    {title:'❌ Wrong answers',type:'wrong',empty:'No wrong answers.'},
+    {title:'⏭ Skipped answers',type:'skipped',empty:'No skipped answers.'}
+  ];
+  document.getElementById('scoreSections').innerHTML=sections.map(s=>{const rows=results.filter(r=>r.type===s.type);return `<section><h3 class="font-display font-700 text-base mb-3">${s.title}</h3>${rows.length?`<div class="space-y-2">${rows.map(r=>`<div class="bg-white/60 border border-white rounded-2xl p-4"><p class="font-medium text-sm leading-relaxed">${esc(r.q.question_text)}</p><p class="text-xs text-slate-500 mt-2">${s.type==='wrong'?`Your answer: <b>${esc(optionText(r.q,r.chosen))}</b> · Correct: <b>${esc(optionText(r.q,r.q.correct_option))}</b>`:s.type==='correct'?`You chose: <b>${esc(optionText(r.q,r.chosen))}</b>`:'Not answered'}</p></div>`).join('')}</div>`:`<p class="text-sm text-slate-400">${s.empty}</p>`}</section>`}).join('');
+  document.getElementById('resultModal').classList.remove('hidden');document.body.classList.add('overflow-hidden');btn.disabled=false;btn.textContent='Submitted';
+}
+document.getElementById('submitBtn').addEventListener('click',submitTest);
+document.getElementById('homeBtn').addEventListener('click',()=>location.href='dashboard.html');
+init();
+</script>
+</body>
+</html>

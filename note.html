@@ -106,7 +106,8 @@
       </div>
 
       <span id="noteSubject" class="text-xs font-semibold text-secondary uppercase tracking-wide"></span>
-      <h1 id="noteTitle" class="font-display font-700 text-2xl md:text-3xl text-ink mt-2 mb-4"></h1>
+      <h1 id="noteTitle" class="font-display font-700 text-2xl md:text-3xl text-ink mt-2 mb-2"></h1>
+      <p id="noteReference" class="text-xs text-slate-400 font-medium mb-4"></p>
       <p id="noteDescription" class="text-slate-600 mb-6 leading-relaxed"></p>
 
       <div class="flex flex-wrap gap-2 mb-6" id="noteKeywords"></div>
@@ -122,6 +123,10 @@
         <button id="downloadBtn" class="anchor-cta flex-1 sm:flex-none flex items-center justify-center gap-2 glass-primary text-white font-semibold text-sm px-6 py-3.5 rounded-full transition-colors">
           <svg class="anchor-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
           Download PDF
+        </button>
+        <button id="mockTestBtn" class="hidden flex-1 sm:flex-none items-center justify-center gap-2 glass-light text-primary font-semibold text-sm px-6 py-3.5 rounded-full transition-colors">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h5"/></svg>
+          Give a Mock Test
         </button>
         <button id="likeBtn" class="like-btn w-12 h-12 rounded-full glass-light flex items-center justify-center hover:border-accent transition-colors">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2">
@@ -170,6 +175,10 @@
       if (error || !note) { showNotFound(); return; }
       currentNote = note;
 
+      const { count: mcqCount, error: mcqCountError } = await supabaseClient
+        .from('mcq_questions').select('id', { count: 'exact', head: true }).eq('note_id', note.id);
+      currentNote.mcqCount = mcqCountError ? 0 : (mcqCount || 0);
+
       const { data: likeRow } = await supabaseClient
         .from('likes').select('id').eq('user_id', currentUser.id).eq('note_id', note.id).maybeSingle();
       isLiked = !!likeRow;
@@ -189,6 +198,10 @@
       document.title = `${currentNote.title} — Picell`;
       document.getElementById('noteSubject').textContent = currentNote.subject;
       document.getElementById('noteTitle').textContent = currentNote.title;
+      document.getElementById('noteReference').textContent = currentNote.reference_code ? `Reference: ${currentNote.reference_code}` : '';
+      const mockBtn = document.getElementById('mockTestBtn');
+      mockBtn.classList.toggle('hidden', !(currentNote.mcqCount > 0));
+      mockBtn.classList.toggle('flex', currentNote.mcqCount > 0);
       document.getElementById('noteDescription').textContent = currentNote.description || 'No description provided.';
 
       if (currentNote.thumbnail_url) {
@@ -227,6 +240,11 @@
         svg.setAttribute('stroke', '#94A3B8');
       }
     }
+
+    document.getElementById('mockTestBtn').addEventListener('click', () => {
+      if (!currentNote?.id || !currentNote.mcqCount) return;
+      window.location.href = `mock-test.html?note=${encodeURIComponent(currentNote.id)}`;
+    });
 
     document.getElementById('downloadBtn').addEventListener('click', async () => {
       const { data: signed, error } = await supabaseClient.storage.from('pdfs').createSignedUrl(currentNote.pdf_url, 60);
